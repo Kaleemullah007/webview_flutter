@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
@@ -221,36 +222,65 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
     );
   }
 
+  /// Go back in WebView history; if there is no history, exit the app.
+  Future<void> _goBackOrExit() async {
+    if (await _webController.canGoBack()) {
+      await _webController.goBack();
+    } else {
+      SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Direct Print WebView', style: TextStyle(fontSize: 16)),
-            Text(
-              _statusText,
-              style: TextStyle(
-                fontSize: 11,
-                color: _isConnected ? Colors.greenAccent : Colors.amber,
+    return PopScope(
+      // Intercept the Android back button/gesture: navigate the WebView
+      // back instead of closing the app (error pages included).
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        _goBackOrExit();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Back',
+            onPressed: _goBackOrExit,
+          ),
+          titleSpacing: 0,
+          title: Text(
+            _statusText,
+            style: TextStyle(
+              fontSize: 12,
+              color: _isConnected ? Colors.greenAccent : Colors.amber,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Reload page',
+              onPressed: () => _webController.reload(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.home_outlined),
+              tooltip: 'Home',
+              onPressed: () =>
+                  _webController.loadRequest(Uri.parse(websiteUrl)),
+            ),
+            IconButton(
+              icon: Icon(
+                _isConnected
+                    ? Icons.bluetooth_connected
+                    : Icons.bluetooth_disabled,
               ),
+              onPressed: _openPrinterDialog,
+              tooltip: 'Bluetooth Printer',
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isConnected
-                  ? Icons.bluetooth_connected
-                  : Icons.bluetooth_disabled,
-            ),
-            onPressed: _openPrinterDialog,
-            tooltip: 'Bluetooth Printer',
-          ),
-        ],
+        body: WebViewWidget(controller: _webController),
       ),
-      body: WebViewWidget(controller: _webController),
     );
   }
 }
