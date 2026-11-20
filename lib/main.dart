@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:esc_pos_utils_plus/esc_pos_utils_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -128,6 +129,14 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
         },
       )
       ..loadRequest(Uri.parse(websiteUrl));
+
+    // Allow the page to play sounds (e.g. the new-order beep) without a
+    // direct user tap. Android WebView blocks such audio by default,
+    // which is why the beep works in a normal browser but not here.
+    final platformController = _webController.platform;
+    if (platformController is AndroidWebViewController) {
+      platformController.setMediaPlaybackRequiresUserGesture(false);
+    }
   }
 
   /// Hook window.onerror inside the page and forward JavaScript errors
