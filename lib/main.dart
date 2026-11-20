@@ -23,7 +23,7 @@ class ThermalWebViewApp extends StatefulWidget {
 
 class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
   // اپنی ویب سائٹ کا اصل URL یہاں لکھیں
-  final String websiteUrl = 'https://example.com';
+  final String websiteUrl = 'https://www.happybitepizza.com';
 
   late final WebViewController _webController;
   List<BluetoothInfo> _devices = [];
