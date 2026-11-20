@@ -94,6 +94,8 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onPageStarted: (_) => _injectJsErrorHook(),
+          onPageFinished: (_) => _injectJsErrorHook(),
           onWebResourceError: (WebResourceError error) {
             // Surface load failures instead of a silent white screen.
             if (error.isForMainFrame ?? true) {
@@ -109,7 +111,34 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
           await _handlePrintPayload(message.message);
         },
       )
+      ..addJavaScriptChannel(
+        'DebugBridge',
+        onMessageReceived: (JavaScriptMessage message) {
+          // JavaScript errors from the page, so failures are visible
+          // instead of ending as silently empty tables.
+          _showSnack('JS error: ${message.message}');
+        },
+      )
       ..loadRequest(Uri.parse(websiteUrl));
+  }
+
+  /// Hook window.onerror inside the page and forward JavaScript errors
+  /// to the DebugBridge channel, so script failures (e.g. a table that
+  /// never fills its rows) become visible in the app.
+  void _injectJsErrorHook() {
+    _webController.runJavaScript('''
+      (function () {
+        if (window.__flutterErrHooked) return;
+        window.__flutterErrHooked = true;
+        window.onerror = function (msg, src, line) {
+          try { DebugBridge.postMessage(msg + ' @ ' + src + ':' + line); } catch (e) {}
+        };
+        window.addEventListener('unhandledrejection', function (e) {
+          var r = e && e.reason;
+          try { DebugBridge.postMessage('Unhandled promise: ' + (r && r.message ? r.message : r)); } catch (ex) {}
+        });
+      })();
+    ''');
   }
 
   Future<void> _handlePrintPayload(String rawMessage) async {
