@@ -159,7 +159,7 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
         'Scan to Verify',
         styles: const PosStyles(align: PosAlign.center, bold: true),
       );
-      bytes += generator.qrcode(qr, size: QRSize.Size6);
+      bytes += generator.qrcode(qr, size: QRSize.size6);
     }
 
     bytes += generator.feed(2);
