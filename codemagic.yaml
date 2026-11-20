@@ -1,0 +1,41 @@
+workflows:
+  android-apk-workflow:
+    name: Build Android APK
+    max_build_duration: 60
+    environment:
+      flutter: stable
+    scripts:
+      - name: Regenerate platform folders (Gradle/Xcode scaffold)
+        script: |
+          flutter create --platforms=android,ios --org com.example --project-name printer_webview_app .
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Build release APK
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+
+  ios-ipa-workflow:
+    name: Build iOS IPA (Future - Requires Apple Credentials)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Regenerate platform folders (Gradle/Xcode scaffold)
+        script: |
+          flutter create --platforms=android,ios --org com.example --project-name printer_webview_app .
+      - name: Get Flutter packages
+        script: |
+          flutter pub get
+      - name: Install CocoaPods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Build iOS IPA
+        script: |
+          flutter build ipa --release
+    artifacts:
+      - build/ios/ipa/*.ipa
