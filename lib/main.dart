@@ -111,6 +111,14 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
           await _handlePrintPayload(message.message);
         },
       )
+      // Same bridge under the name the website-side integration guide
+      // uses (window.AndroidPrinter), so either name works.
+      ..addJavaScriptChannel(
+        'AndroidPrinter',
+        onMessageReceived: (JavaScriptMessage message) async {
+          await _handlePrintPayload(message.message);
+        },
+      )
       ..addJavaScriptChannel(
         'DebugBridge',
         onMessageReceived: (JavaScriptMessage message) {
