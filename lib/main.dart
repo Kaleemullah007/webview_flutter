@@ -115,12 +115,14 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
 
     String title = 'PRINT RECEIPT';
     String body = rawMessage;
+    String qr = '';
 
     try {
       final decoded = jsonDecode(rawMessage);
       if (decoded is Map<String, dynamic>) {
         title = (decoded['title'] ?? 'RECEIPT').toString();
         body = (decoded['body'] ?? '').toString();
+        qr = (decoded['qr'] ?? '').toString();
       }
     } catch (_) {
       // سادہ ٹیکسٹ کی صورت میں
@@ -147,6 +149,16 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
         line,
         styles: const PosStyles(align: PosAlign.left),
       );
+    }
+
+    // QR code (invoice verification link), when provided by the web page
+    if (qr.isNotEmpty) {
+      bytes += generator.feed(1);
+      bytes += generator.text(
+        'Scan to Verify',
+        styles: const PosStyles(align: PosAlign.center, bold: true),
+      );
+      bytes += generator.qrcode(qr, size: QRSize.Size6);
     }
 
     bytes += generator.feed(2);
