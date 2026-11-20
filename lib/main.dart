@@ -89,18 +89,20 @@ class _ThermalWebViewAppState extends State<ThermalWebViewApp> {
     });
   }
 
-  // Desktop-style Chrome UA: some backends silently withhold list/API data
-  // (orders, users, etc.) when they detect the Android WebView "; wv)"
-  // marker in the default user agent, even though the page itself renders
-  // fine. Using a normal Chrome UA avoids that WebView-specific blocking.
-  static const String _desktopLikeUserAgent =
-      'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 '
-      '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
-
   void _initWebView() {
     _webController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setUserAgent(_desktopLikeUserAgent)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onWebResourceError: (WebResourceError error) {
+            // Surface load failures instead of a silent white screen.
+            if (error.isForMainFrame ?? true) {
+              _showSnack(
+                  'Page load error: ${error.description} (${error.errorCode})');
+            }
+          },
+        ),
+      )
       ..addJavaScriptChannel(
         'PrinterBridge',
         onMessageReceived: (JavaScriptMessage message) async {
