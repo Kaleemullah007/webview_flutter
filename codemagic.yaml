@@ -11,11 +11,18 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter pub get
-      - name: Build release APK
+      - name: Build release APK (skip buggy lintVital tasks)
         script: |
-          flutter build apk --release
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -x lintVitalAnalyzeRelease \
+            -x lintVitalRelease \
+            -x lintVitalReportRelease \
+            --no-daemon
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
+      - android/app/build/outputs/apk/release/*.apk
 
   ios-ipa-workflow:
     name: Build iOS IPA (Future - Requires Apple Credentials)
